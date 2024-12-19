@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   base: '/task-tracker/', // for github pages
+  build: {
+    outDir: 'docs',
+  },
 })
