@@ -2,7 +2,9 @@ import { useRef } from "react";
 import styled from "styled-components";
 import useStore, { Task } from "./useStore";
 import { useEffect, useState } from "react";
-import ExpectedInput from "./ExpectedInput";
+// import ExpectedInput from "./ExpectedInput";
+// import useDateInput from "./useDateInput";
+import DateInput from "./DateInput";
 
 interface Props {
   task: Task;
@@ -13,13 +15,6 @@ interface Props {
 
 function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
-  const [expectedDate, setExpectedDate] = useState<Date | undefined>(
-    task.status === 2
-      ? task.expectedReviewAt
-      : task.status === 3
-        ? task.expectedCompleteAt
-        : undefined
-  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [newAnimTimeoutID, setNewAnimTimeoutID] = useState<number>(0);
   const [updatedAnimTimeoutID, setUpdatedAnimTimeoutID] = useState<number>(0);
@@ -42,27 +37,46 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     // 실시간으로 업데이트 될 때마다 위치가 바뀌는 문제 존재
     // 날짜 입력 끝나야 업데이트하도록 수정하거나
     // 스테이지에서 태스크 개수가 바뀔 때만 정렬 다시하도록 수정
-    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    playUpdatedAnim();
+
 
     if (task.status === 2) {
+      if (date?.valueOf() === task.expectedReviewAt?.valueOf()) {
+        return;
+      }
+
       const newTask = {
         ...task,
         expectedReviewAt: date,
       };
       store.updateTask(task.id, newTask);
-      return;
     };
 
     if (task.status === 3) {
+      if (date?.valueOf() === task.expectedCompleteAt?.valueOf()) {
+        return;
+      }
+
       const newTask = {
         ...task,
         expectedCompleteAt: date,
       };
       store.updateTask(task.id, newTask);
-      return;
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      playUpdatedAnim();
     };
+
+    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    playUpdatedAnim();
   };
+
+  // const { DateInput } = useDateInput(
+  //   task.status === 2
+  //     ? task.expectedReviewAt
+  //     : task.status === 3
+  //       ? task.expectedCompleteAt
+  //       : undefined,
+  //   updateExpectedDate,
+  // );
 
   const removeHandler = () => {
     store.removeTask(task.id);
@@ -116,6 +130,23 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
       {task.status === 3 && <div>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>}
       {
         (task.status === 2 || task.status === 3) &&
+        <DateInput
+          defaultDate={
+            task.status === 2
+              ? task.expectedReviewAt
+              : task.status === 3
+                ? task.expectedCompleteAt
+                : undefined
+          }
+          onConfirmDate={updateExpectedDate}
+        />
+      }
+      {/* {
+        (task.status === 2 || task.status === 3) &&
+        <DateInput />
+      } */}
+      {/* {
+        (task.status === 2 || task.status === 3) &&
         <ExpectedInput
           value={expectedDate}
           setValue={(date) => {
@@ -123,7 +154,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
             updateExpectedDate(date);
           }}
         />
-      }
+      } */}
       {/* 
       상위로 하나 더 묶어서 onFocus 관리
       <DetailButton> 

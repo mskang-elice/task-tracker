@@ -2,7 +2,9 @@ import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import useStore, { SortType, stageNames, Task } from "./useStore";
 import TaskCard from "./TaskCard";
-import ExpectedInput from "./ExpectedInput";
+// import ExpectedInput from "./ExpectedInput";
+// import useDateInput from "./useDateInput";
+import DateInput from "./DateInput";
 
 interface Props {
   stageId: number;
@@ -37,6 +39,10 @@ function Stage({
   const [isAdding, setIsAdding] = useState(false);
   const [addData, setAddData] = useState<AddData>({ title: '' });
   const [expected, setExpected] = useState<Date | undefined>(undefined);
+  // const { DateInput } = useDateInput(
+  //   undefined,
+  //   (inputDate) => setExpected(inputDate),
+  // );
 
   // 태스크 애니메이션
   const [newTaskId, setNewTaskId] = useState<number | undefined>(undefined);
@@ -130,17 +136,17 @@ function Stage({
             setIsAdding(false)
           }
         }}
-        onKeyDown={(e) => {
-          if (addData.title.length > 0 && e.key === 'Enter') {
-            addTask();
-          }
-        }}
       >
         {isAdding
           ? <input
             autoFocus
             value={addData.title}
             onChange={(e) => setAddData({ title: e.target.value })}
+            onKeyDown={(e) => {
+              if (addData.title.length > 0 && e.key === 'Enter') {
+                addTask();
+              }
+            }}
             placeholder="새 작업"
           />
           : <div>{addData.title || '새 작업'}</div>
@@ -149,11 +155,23 @@ function Stage({
         {isAdding
           && addData.title.length > 0
           && (stageId === 2 || stageId === 3)
+          && <DateInput
+            onAddTask={addTask}
+          />
+        }
+        {/* {isAdding
+          && addData.title.length > 0
+          && (stageId === 2 || stageId === 3)
+          && <DateInput />
+        } */}
+        {/* {isAdding
+          && addData.title.length > 0
+          && (stageId === 2 || stageId === 3)
           && <ExpectedInput
             value={expected}
             setValue={(date) => setExpected(date)}
           />
-        }
+        } */}
       </AddContainer>
     </Container>
   );
