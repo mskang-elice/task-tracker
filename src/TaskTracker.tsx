@@ -73,6 +73,7 @@ const StageContainer = styled.div`
   flex: 1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
+  /* grid-template-columns: 20vw 20vw 20vw 20vw 20vw; */
   grid-template-rows: 100%;
   gap: 10px;
 `;

@@ -3,7 +3,8 @@ import styled from "styled-components";
 import useStore, { Task } from "./useStore";
 import { useEffect, useState } from "react";
 import DateInput from "./DateInput";
-import { RemoveIcon } from "./Icons";
+import { MenuIcon, TrashIcon } from "./Icons";
+import { colors } from "./colors";
 
 interface Props {
   task: Task;
@@ -15,8 +16,6 @@ interface Props {
 function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [newAnimTimeoutID, setNewAnimTimeoutID] = useState<number>(0);
-  const [updatedAnimTimeoutID, setUpdatedAnimTimeoutID] = useState<number>(0);
 
   const moveHandler = (delta: number) => {
     const newStatus = task.status + delta;
@@ -55,17 +54,51 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
         expectedCompleteAt: date,
       };
       store.updateTask(task.id, newTask);
-      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      playUpdatedAnim();
     };
 
-    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     playUpdatedAnim();
+    setTimeout(() =>
+      containerRef.current?.scrollIntoView({ behavior: 'instant', block: 'center' })
+      , 10);
   };
 
+  // const updateHandler = () => {
+  //   const newTask = task;
+  //   store.updateTask(task.id, newTask);
+  // };
+
   const removeHandler = () => {
-    store.removeTask(task.id);
+    setIsDying(true);
+    setTimeout(() => {
+      store.removeTask(task.id);
+    }, 150);
   };
+
+  // Menu
+  const menuContainerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const menuButtonHandler = () => {
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    } else {
+      setIsMenuOpen(true);
+      menuContainerRef.current?.focus();
+    }
+  };
+
+  const menuBlurHandler = (e: React.FocusEvent<HTMLDivElement, Element>) => {
+    if (!menuContainerRef.current?.contains(e.relatedTarget)
+      && e.relatedTarget !== menuButtonRef.current) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  // Animations
+  const [newAnimTimeoutID, setNewAnimTimeoutID] = useState<number>(0);
+  const [updatedAnimTimeoutID, setUpdatedAnimTimeoutID] = useState<number>(0);
+  const [isDying, setIsDying] = useState(false);
 
   const playUpdatedAnim = () => {
     if (updatedAnimTimeoutID > 0) {
@@ -100,8 +133,13 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   }, [isNew]);
 
   return (
-    <Frame>
-      <Container ref={containerRef} $isNew={newAnimTimeoutID > 0} $isUpdated={updatedAnimTimeoutID > 0}>
+    <Wrapper $isDying={isDying}>
+      <Container
+        ref={containerRef}
+        $isNew={newAnimTimeoutID > 0}
+        $isUpdated={updatedAnimTimeoutID > 0}
+        $isDying={isDying}
+      >
         {/* DEBUG */}
         {/* <h1>{isMoved ? 'true' : 'false'}</h1>
         <div>ID: {task.id}</div> */}
@@ -145,15 +183,32 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
           <MoveToButton>move to</MoveToButton>
           <MoveButton disabled={task.status === 4} onClick={() => moveHandler(1)}>right</MoveButton>
         </ButtonContainer>
-        <RemoveButton className="remove-button" onClick={removeHandler}>
-          <RemoveIcon />
-        </RemoveButton>
+
+        <MenuContainer
+          ref={menuContainerRef}
+          $isOpen={isMenuOpen}
+          tabIndex={0}
+          onBlur={menuBlurHandler}
+        >
+          <RemoveButton className="remove-button" onClick={removeHandler}>
+            <TrashIcon />
+          </RemoveButton>
+        </MenuContainer>
+        <MenuButton
+          ref={menuButtonRef}
+          onClick={menuButtonHandler}
+        >
+          <MenuIcon />
+        </MenuButton>
       </Container>
-    </Frame>
+      <ColorTag className="color-tag" $color={colors[task.colorIdx]} />
+    </Wrapper>
   );
 }
 
-const Frame = styled.div`
+const Wrapper = styled.div<{ $isDying?: boolean }>`
+  position: relative;
+
   width: 100%;
   height: 100px;
 
@@ -165,31 +220,59 @@ const Frame = styled.div`
   overflow: hidden;
 
   background-color: none;
+
+  animation: ${({ $isDying }) => $isDying
+    ? 'wrapperDyingAnim 0.2s ease-in-out'
+    : 'none'};
+
+  @keyframes wrapperDyingAnim {
+    0% {
+      height: 100px;
+    }
+    100% {
+      height: 0px;
+    }
+  }
 `;
 
-const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
+const Container = styled.div<{
+  $isNew?: boolean,
+  $isUpdated?: boolean,
+  $isDying?: boolean,
+}>`
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   width: 95%;
   height: 95%;
 
-  padding: 5px;
-  box-shadow: 10;
+  overflow: hidden;
+
+  padding: 10px;
+  box-shadow: 0 0 3px #9e9e9e;
 
   border-radius: 10px;
 
-  background-color: ${({ $isNew }) => $isNew
+  background-color: ${({ $isNew, $isUpdated }) => $isNew
     ? '#88ec88'
-    : '#add8e6'
+    : $isUpdated
+      ? '#6fcdec'
+      : '#ffffff'
   };
   transition: background-color 0.3s ease-in-out;
 
-  animation: ${({ $isNew, $isUpdated }) => $isUpdated
-    ? 'updatedAnim 0.1s ease-in-out'
-    : $isNew
-      ? 'newAnim 0.2s ease-in-out'
-      : 'none'};
+  animation: ${({ $isNew, $isUpdated, $isDying }) => {
+    if ($isUpdated) {
+      return 'updatedAnim 0.1s ease-in-out';
+    } else if ($isNew) {
+      return 'newAnim 0.2s ease-in-out';
+    } else if ($isDying) {
+      return 'containerDyingAnim 0.2s ease-in-out';
+    } else {
+      return 'none';
+    }
+  }};
 
   @keyframes updatedAnim {
     0% {
@@ -218,14 +301,56 @@ const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
     }
   }
 
-  &:hover {
-    filter: brightness(105%);
+  @keyframes containerDyingAnim {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(0);
+    }
   }
 
-  &:hover .remove-button {
-    display: flex;
+  &:hover {
+    filter: brightness(98%);
+  }
+
+  /* &:hover .color-tag {
+    height: calc(100% - 20px);
+  } */
+  &:hover ~ .color-tag {
+    height: calc(95% - 20px);
   }
 `;
+
+const ColorTag = styled.div<{ $color: string }>`
+  width: 4px;
+  height: 50%;
+  transition: height 0.1s ease-in-out;
+
+  border-radius: 2px;
+
+  position: absolute;
+  top: 50%;
+  left: 1.3%;
+  transform: translateY(-50%);
+
+  background-color: ${({ $color }) => $color};
+`;
+
+// const ColorTag = styled.div<{ $color: string }>`
+//   width: 4px;
+//   height: calc(50% - 10px);
+//   transition: height 0.1s ease-in-out;
+
+//   border-radius: 2px;
+
+//   position: absolute;
+//   top: 50%;
+//   left: -3px;
+//   transform: translateY(-50%);
+
+//   background-color: ${({ $color }) => $color};
+// `;
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -244,25 +369,94 @@ const MoveToButton = styled(Button)`
   /* flex: 1; */
 `;
 
-const RemoveButton = styled(Button)`
-  display: none;
+const MenuButton = styled(Button)`
+  display: flex;
 
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 
   align-items: center;
   justify-content: center;
 
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 19px;
+  right: 19px;
+  translate: 50% -50%;
 
   border-radius: 30%;
-  
+
   border: none;
 
+  box-shadow: 0 0 2px #9e9e9e;
+
+  background-color: #F7F7F9;
+
+  transition: transform 50ms ease-in-out;
   &:hover {
-    background-color: #ff9999;
+    background-color: #DBDBDD;
+    transform: scale(1.2);
+  }
+`;
+
+const MenuContainer = styled.div<{ $isOpen: boolean }>`
+  /* width: 30px;
+  height: 30px; */
+  /* aspect-ratio: 1 / 1; */
+  width: ${({ $isOpen }) => $isOpen
+    ? '250%'
+    : '0'
+  };
+  height: ${({ $isOpen }) => $isOpen
+    ? '500%'
+    : '0'
+  };
+  border-radius: 50%;
+  transition: width 0.1s ease-in-out, height 0.1s ease-in-out;
+  
+  position: absolute;
+  top: 19px;
+  right: 19px;
+  translate: 50% -50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  background-color: gold; // debug
+
+  &:focus {
+    background-color: orange; // debug
+  }
+`;
+
+const RemoveButton = styled(Button)`
+  display: flex;
+
+  width: 22px;
+  height: 22px;
+
+  align-items: center;
+  justify-content: center;
+
+  position: absolute;
+  /* top: 19px; */
+  /* right: 19px; */
+  /* translate: 50% -50%; */
+  translate: 0 32px;
+  
+
+  border-radius: 30%;
+
+  border: none;
+
+  box-shadow: 0 0 2px #9e9e9e;
+
+  background-color: #F7F7F9;
+
+  transition: transform 50ms ease-in-out;
+  &:hover {
+    background-color: #f5cdcd;
   }
 `;
 

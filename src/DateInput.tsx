@@ -25,11 +25,16 @@ const DateInput = ({ defaultDate, onConfirmDate, onEnterDown }: Props) => {
   };
 
   const applyTextToDate = (newText: string) => {
+    if (newText === '') {
+      setDate(undefined);
+      return undefined;
+    }
+
     const newDate = new Date(elongateYear(newText));
 
     if (isNaN(newDate.getTime())) {
-      // 유효하지 않은 날짜 텍스트
-      return undefined;
+      // 유효하지 않은 날짜 텍스트: 기존 date 값 반환
+      return date;
     }
 
     if (newDate.getFullYear() === new Date('1/1').getFullYear()) {
@@ -46,7 +51,7 @@ const DateInput = ({ defaultDate, onConfirmDate, onEnterDown }: Props) => {
   };
 
   const onDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value);
+    const newDate = e.target.value ? new Date(e.target.value) : undefined;
     setDate(newDate);
     applyDateToText(newDate);
     onConfirmDate?.(newDate);
@@ -133,9 +138,15 @@ const date2value = (date: Date | undefined) => {
 };
 
 const Container = styled.div`
+  width: 100px;
+  height: 30px;
+
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-around;
+
+  background-color: red;
 `;
 
 const StyledTextInput = styled.input`
@@ -144,8 +155,15 @@ const StyledTextInput = styled.input`
 `;
 
 const StyledDateInput = styled.input`
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+
+  border: none;
+  border-radius: 50%;
+
+  &:hover {
+    box-shadow: 0 0 3px;
+  }
 `;
 
 export default DateInput;

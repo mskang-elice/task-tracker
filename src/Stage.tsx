@@ -80,6 +80,7 @@ function Stage({
       title: addData.title,
       link: '',
       status: stageId,
+      colorIdx: 0,
       createdAt: new Date(),
       expectedReviewAt: stageId === 2 ? expectedDate : undefined,
       expectedCompleteAt: stageId === 3 ? expectedDate : undefined,
@@ -111,59 +112,63 @@ function Stage({
         {stageId === 2 && <SortButton onClick={() => handleSort(SortType.expectedReviewAt)}>expectedReviewAt</SortButton>}
         {stageId === 3 && <SortButton onClick={() => handleSort(SortType.expectedCompleteAt)}>expectedCompleteAt</SortButton>}
       </ToolbarContainer>
-      <TaskContainer>
-        {sortedTasks.map((task) =>
-          <TaskCard
-            key={task.id}
-            task={task}
-            isNew={newTaskId === task.id}
-            isMoved={movedTaskId === task.id}
-            onMove={() => onMove(task.id)}
-          />
-        )}
-      </TaskContainer>
-      <AddContainer
-        ref={addPanelRef}
-        tabIndex={0}
-        onFocus={() => {
-          setIsAdding(true);
-          setExpected(undefined);
-        }}
-        onBlur={(e) => {
-          if (!addPanelRef.current?.contains(e.relatedTarget)) {
-            setIsAdding(false)
+      <TaskWrapper>
+        <TaskContainer>
+          {sortedTasks.map((task) =>
+            <TaskCard
+              key={task.id}
+              task={task}
+              isNew={newTaskId === task.id}
+              isMoved={movedTaskId === task.id}
+              onMove={() => onMove(task.id)}
+            />
+          )}
+        </TaskContainer>
+      </TaskWrapper>
+      <AddWrapper>
+        <AddContainer
+          ref={addPanelRef}
+          tabIndex={0}
+          onFocus={() => {
+            setIsAdding(true);
+            setExpected(undefined);
+          }}
+          onBlur={(e) => {
+            if (!addPanelRef.current?.contains(e.relatedTarget)) {
+              setIsAdding(false)
+            }
+          }}
+        >
+          {isAdding
+            ? <input
+              autoFocus
+              value={addData.title}
+              onChange={(e) => setAddData({ title: e.target.value })}
+              onKeyDown={(e) => {
+                if (addData.title.length > 0 && e.key === 'Enter') {
+                  addTask(expected); // Stage 내부 일자 상태 사용
+                }
+              }}
+              placeholder="새 작업"
+            />
+            : <div>{addData.title || '새 작업'}</div>
           }
-        }}
-      >
-        {isAdding
-          ? <input
-            autoFocus
-            value={addData.title}
-            onChange={(e) => setAddData({ title: e.target.value })}
-            onKeyDown={(e) => {
-              if (addData.title.length > 0 && e.key === 'Enter') {
-                addTask(expected); // Stage 내부 일자 상태 사용
-              }
-            }}
-            placeholder="새 작업"
-          />
-          : <div>{addData.title || '새 작업'}</div>
-        }
-        {addData.title.length > 0 && <AddButton onClick={() => addTask(expected)}>add</AddButton>}
-        {isAdding
-          && addData.title.length > 0
-          && (stageId === 2 || stageId === 3)
-          && <DateInput
-            onConfirmDate={setExpected} // Stage 내부 일자 상태 업데이트
-            onEnterDown={(date) => {
-              // DateInput에서 직접 일자 전달
-              if (addData.title.length > 0) {
-                addTask(date);
-              }
-            }}
-          />
-        }
-      </AddContainer>
+          {addData.title.length > 0 && <AddButton onClick={() => addTask(expected)}>add</AddButton>}
+          {isAdding
+            && addData.title.length > 0
+            && (stageId === 2 || stageId === 3)
+            && <DateInput
+              onConfirmDate={setExpected} // Stage 내부 일자 상태 업데이트
+              onEnterDown={(date) => {
+                // DateInput에서 직접 일자 전달
+                if (addData.title.length > 0) {
+                  addTask(date);
+                }
+              }}
+            />
+          }
+        </AddContainer>
+      </AddWrapper>
     </Container>
   );
 }
@@ -186,21 +191,33 @@ const ToolbarContainer = styled.div`
 const SortButton = styled.button`
 `;
 
-const TaskContainer = styled.div`
+const TaskWrapper = styled.div`
   width: 100%;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
+`
+
+const TaskContainer = styled.div`
+  width: 100%;
 
   display: flex;
   flex-direction: column;
   align-items: center;
 `;
 
-const AddContainer = styled.div`
+const AddWrapper = styled.div`
   width: 100%;
-  max-height: 30px;
+  height: 60px;
+
+  overflow: hidden;
 
   background-color: red;
+`
+
+const AddContainer = styled.div`
+  width: 100%;
+
+  background-color: green;
 `;
 
 const AddButton = styled.button`

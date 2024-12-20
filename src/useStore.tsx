@@ -17,6 +17,8 @@ export interface Task {
   link?: string; // Jira 링크
   // 상태: 구상 계획 진행 검수 완료
   status: number;
+  colorIdx: number; // 색상 ID (colors.ts)
+  
   createdAt?: Date; // 생성 시각
   plannedAt?: Date; // 계획 시작 시각
   startedAt?: Date; // 진행 시작 시각
@@ -27,6 +29,7 @@ export interface Task {
 }
 
 interface TaskRaw {
+  colorIdx?: string;
   createdAt: string;
   startedAt: string;
   reviewedAt: string;
@@ -91,6 +94,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
       nextId: storageData.nextId,
       tasks: storageData.tasks.map((task: TaskRaw) => ({
         ...task,
+        colorIdx: task.colorIdx || 0,
         createdAt: new Date(task.createdAt),
         startedAt: task.startedAt ? new Date(task.startedAt) : undefined,
         reviewedAt: task.reviewedAt ? new Date(task.reviewedAt) : undefined,
