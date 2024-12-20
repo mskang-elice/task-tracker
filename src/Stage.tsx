@@ -2,8 +2,6 @@ import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import useStore, { SortType, stageNames, Task } from "./useStore";
 import TaskCard from "./TaskCard";
-// import ExpectedInput from "./ExpectedInput";
-// import useDateInput from "./useDateInput";
 import DateInput from "./DateInput";
 
 interface Props {
@@ -34,19 +32,7 @@ function Stage({
   const store = useStore();
   const stage = stageNames[stageId];
 
-  // 태스크 추가 패널
-  const addPanelRef = useRef<HTMLDivElement>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [addData, setAddData] = useState<AddData>({ title: '' });
-  const [expected, setExpected] = useState<Date | undefined>(undefined);
-  // const { DateInput } = useDateInput(
-  //   undefined,
-  //   (inputDate) => setExpected(inputDate),
-  // );
-
-  // 태스크 애니메이션
-  const [newTaskId, setNewTaskId] = useState<number | undefined>(undefined);
-
+  // ==============================[태스크 목록]==============================
   const sortedTasks = useMemo(() => tasks.sort((a, b) => {
     // 태스크 정렬 로직
     // 정렬할 값이 없으면 맨 뒤로
@@ -60,30 +46,6 @@ function Stage({
       ? (cmp ? 1 : -1)
       : (cmp ? -1 : 1);
   }), [tasks, sortType, isAscending]);
-
-  const addTask = () => {
-    // 태스크 추가
-    const newTask: Task = {
-      id: store.data.nextId,
-      title: addData.title,
-      link: '',
-      status: stageId,
-      createdAt: new Date(),
-      expectedReviewAt: stageId === 2 ? expected : undefined,
-      expectedCompleteAt: stageId === 3 ? expected : undefined,
-    };
-    store.addTask(newTask);
-
-    // 입력 필드 초기화
-    setAddData({ title: '' });
-    setIsAdding(false);
-
-    // 신규 태스크 애니메이션 트리거
-    setNewTaskId(newTask.id);
-    setTimeout(() => {
-      setNewTaskId(undefined);
-    }, 1);
-  };
 
   const handleSort = (newSortType: SortType) => {
     if (newSortType === sortType) {
@@ -99,6 +61,39 @@ function Stage({
     setMovedTaskId(taskId);
     setTimeout(() => {
       setMovedTaskId(undefined);
+    }, 1);
+  };
+
+  // ==============================[태스크 추가 패널]==============================
+  const addPanelRef = useRef<HTMLDivElement>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addData, setAddData] = useState<AddData>({ title: '' });
+  const [expected, setExpected] = useState<Date | undefined>(undefined);
+
+  // 신규 태스크 애니메이션 재생용 상태
+  const [newTaskId, setNewTaskId] = useState<number | undefined>(undefined);
+
+  const addTask = (expectedDate: Date | undefined) => {
+    // 태스크 추가
+    const newTask: Task = {
+      id: store.data.nextId,
+      title: addData.title,
+      link: '',
+      status: stageId,
+      createdAt: new Date(),
+      expectedReviewAt: stageId === 2 ? expectedDate : undefined,
+      expectedCompleteAt: stageId === 3 ? expectedDate : undefined,
+    };
+    store.addTask(newTask);
+
+    // 입력 필드 초기화
+    setAddData({ title: '' });
+    setIsAdding(false);
+
+    // 신규 태스크 애니메이션 트리거
+    setNewTaskId(newTask.id);
+    setTimeout(() => {
+      setNewTaskId(undefined);
     }, 1);
   };
 
@@ -130,7 +125,10 @@ function Stage({
       <AddContainer
         ref={addPanelRef}
         tabIndex={0}
-        onFocus={() => setIsAdding(true)}
+        onFocus={() => {
+          setIsAdding(true);
+          setExpected(undefined);
+        }}
         onBlur={(e) => {
           if (!addPanelRef.current?.contains(e.relatedTarget)) {
             setIsAdding(false)
@@ -144,34 +142,27 @@ function Stage({
             onChange={(e) => setAddData({ title: e.target.value })}
             onKeyDown={(e) => {
               if (addData.title.length > 0 && e.key === 'Enter') {
-                addTask();
+                addTask(expected); // Stage 내부 일자 상태 사용
               }
             }}
             placeholder="새 작업"
           />
           : <div>{addData.title || '새 작업'}</div>
         }
-        {addData.title.length > 0 && <AddButton onClick={addTask}>add</AddButton>}
+        {addData.title.length > 0 && <AddButton onClick={() => addTask(expected)}>add</AddButton>}
         {isAdding
           && addData.title.length > 0
           && (stageId === 2 || stageId === 3)
           && <DateInput
-            onAddTask={addTask}
+            onConfirmDate={setExpected} // Stage 내부 일자 상태 업데이트
+            onEnterDown={(date) => {
+              // DateInput에서 직접 일자 전달
+              if (addData.title.length > 0) {
+                addTask(date);
+              }
+            }}
           />
         }
-        {/* {isAdding
-          && addData.title.length > 0
-          && (stageId === 2 || stageId === 3)
-          && <DateInput />
-        } */}
-        {/* {isAdding
-          && addData.title.length > 0
-          && (stageId === 2 || stageId === 3)
-          && <ExpectedInput
-            value={expected}
-            setValue={(date) => setExpected(date)}
-          />
-        } */}
       </AddContainer>
     </Container>
   );
