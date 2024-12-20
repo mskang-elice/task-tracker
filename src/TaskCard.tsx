@@ -3,6 +3,7 @@ import styled from "styled-components";
 import useStore, { Task } from "./useStore";
 import { useEffect, useState } from "react";
 import DateInput from "./DateInput";
+import { RemoveIcon } from "./Icons";
 
 interface Props {
   task: Task;
@@ -99,69 +100,90 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   }, [isNew]);
 
   return (
-    <Container ref={containerRef} $isNew={newAnimTimeoutID > 0} $isUpdated={updatedAnimTimeoutID > 0}>
-      <h1>{isMoved ? 'true' : 'false'}</h1>
-      <div>ID: {task.id}</div>
-      <div>Title: {task.title}</div>
-      <div>Link: {task.link}</div>
-      <div>Status: {task.status}</div>
-      <div>Created At: {task.createdAt?.toLocaleString('ko-KR')}</div>
-      <div>Planned At: {task.plannedAt?.toLocaleString('ko-KR')}</div>
-      <div>Started At: {task.startedAt?.toLocaleString('ko-KR')}</div>
-      <div>Reviewed At: {task.reviewedAt?.toLocaleString('ko-KR')}</div>
-      <div>Completed At: {task.completedAt?.toLocaleString('ko-KR')}</div>
-      {task.status === 2 && <div>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
-      {task.status === 3 && <div>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>}
-      {
-        (task.status === 2 || task.status === 3) &&
-        <DateInput
-          defaultDate={
-            task.status === 2
-              ? task.expectedReviewAt
-              : task.status === 3
-                ? task.expectedCompleteAt
-                : undefined
-          }
-          onConfirmDate={updateExpectedDate}
-        />
-      }
-      {/* 
+    <Frame>
+      <Container ref={containerRef} $isNew={newAnimTimeoutID > 0} $isUpdated={updatedAnimTimeoutID > 0}>
+        {/* DEBUG */}
+        {/* <h1>{isMoved ? 'true' : 'false'}</h1>
+        <div>ID: {task.id}</div> */}
+        <div>Title: {task.title}</div>
+        {/* <div>Link: {task.link}</div>
+        <div>Status: {task.status}</div>
+        <div>Created At: {task.createdAt?.toLocaleString('ko-KR')}</div>
+        <div>Planned At: {task.plannedAt?.toLocaleString('ko-KR')}</div>
+        <div>Started At: {task.startedAt?.toLocaleString('ko-KR')}</div>
+        <div>Reviewed At: {task.reviewedAt?.toLocaleString('ko-KR')}</div>
+        <div>Completed At: {task.completedAt?.toLocaleString('ko-KR')}</div>
+        {task.status === 2 && <div>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
+        {task.status === 3 && <div>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>} */}
+        {/* DEBUG */}
+        {
+          (task.status === 2 || task.status === 3) &&
+          <DateInput
+            defaultDate={
+              task.status === 2
+                ? task.expectedReviewAt
+                : task.status === 3
+                  ? task.expectedCompleteAt
+                  : undefined
+            }
+            onConfirmDate={updateExpectedDate}
+          />
+        }
+        {/* 
       상위로 하나 더 묶어서 onFocus 관리
       <DetailButton> 
       <DetailModalBoundingBox /> 위 아래 여백 따라 방향 맞추기
        */}
-      <ButtonContainer>
-        <MoveButton disabled={task.status === 0} onClick={() => moveHandler(-1)}>left</MoveButton>
-        {/*
+        <ButtonContainer>
+          <MoveButton disabled={task.status === 0} onClick={() => moveHandler(-1)}>left</MoveButton>
+          {/*
         상위로 하나 더 묶어서 MoveToButton과 함께 onFocus 관리
         <MoveToModalBoundingBox /> size change, overflow hidden
         <MoveToModalContainer /> 버튼 5개, 현재 스테이지 비활성화
 
         */}
-        <MoveToButton>move to</MoveToButton>
-        <MoveButton disabled={task.status === 4} onClick={() => moveHandler(1)}>right</MoveButton>
-      </ButtonContainer>
-      <RemoveButton onClick={removeHandler}>x</RemoveButton>
-    </Container>
+          <MoveToButton>move to</MoveToButton>
+          <MoveButton disabled={task.status === 4} onClick={() => moveHandler(1)}>right</MoveButton>
+        </ButtonContainer>
+        <RemoveButton className="remove-button" onClick={removeHandler}>
+          <RemoveIcon />
+        </RemoveButton>
+      </Container>
+    </Frame>
   );
 }
 
-const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
+const Frame = styled.div`
+  width: 100%;
+  height: 100px;
+
   display: flex;
   flex-direction: column;
-  width: 100%;
+  align-items: center;
+  justify-content: center;
 
-  padding: 10px;
+  overflow: hidden;
 
-  /* background-color: lightblue; */
-  background-color: ${({ $isNew, $isUpdated }) => $isUpdated
-    ? 'lightgreen'
-    : $isNew
-      ? 'lightyellow'
-      : 'lightblue'};
-  transition: background-color 1s ease-in-out;
+  background-color: none;
+`;
+
+const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 95%;
+  height: 95%;
+
+  padding: 5px;
+  box-shadow: 10;
 
   border-radius: 10px;
+
+  background-color: ${({ $isNew }) => $isNew
+    ? '#88ec88'
+    : '#add8e6'
+  };
+  transition: background-color 0.3s ease-in-out;
 
   animation: ${({ $isNew, $isUpdated }) => $isUpdated
     ? 'updatedAnim 0.1s ease-in-out'
@@ -171,13 +193,16 @@ const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
 
   @keyframes updatedAnim {
     0% {
-      transform: scale(1);
+      transform: translateY(0);
     }
-    80% {
-      transform: scale(1.05);
+    40% {
+      transform: translateY(-10px);
+    }
+    90% {
+      transform: translateY(2px);
     }
     100% {
-      transform: scale(1);
+      transform: translateY(0);
     }
   }
 
@@ -191,6 +216,14 @@ const Container = styled.div<{ $isNew?: boolean, $isUpdated?: boolean }>`
     100% {
       transform: scale(1);
     }
+  }
+
+  &:hover {
+    filter: brightness(105%);
+  }
+
+  &:hover .remove-button {
+    display: flex;
   }
 `;
 
@@ -212,7 +245,25 @@ const MoveToButton = styled(Button)`
 `;
 
 const RemoveButton = styled(Button)`
-  /* flex: 1; */
+  display: none;
+
+  width: 18px;
+  height: 18px;
+
+  align-items: center;
+  justify-content: center;
+
+  position: absolute;
+  top: 4px;
+  right: 4px;
+
+  border-radius: 30%;
+  
+  border: none;
+
+  &:hover {
+    background-color: #ff9999;
+  }
 `;
 
 export default TaskCard;
