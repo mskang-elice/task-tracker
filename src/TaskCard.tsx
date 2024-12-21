@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import styled from "styled-components";
-import useStore, { Task } from "./useStore";
+import useStore, { stageNames, Task } from "./useStore";
 import { useEffect, useState } from "react";
 import DateInput from "./DateInput";
-import { MenuIcon, TrashIcon } from "./Icons";
+import { CancelIcon, ConfirmIcon, MenuIcon, MoreIcon, RemoveIcon, StepIcon } from "./Icons";
 import { colors } from "./colors";
 
 interface Props {
@@ -17,8 +17,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const moveHandler = (delta: number) => {
-    const newStatus = task.status + delta;
+  const moveHandler = (newStatus: number) => {
     const newTask = {
       ...task,
       status: newStatus,
@@ -30,6 +29,32 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     store.updateTask(task.id, newTask);
     onMove?.();
   };
+
+  const updateTask = (newTask: Task) => {
+    // 이전 태스크에서 변경 사항이 있는지 확인하고, 있을 때만 실제로 저장소에 반영
+    // id, status는 변경 체크 안함
+    if (
+      newTask.title === task.title
+      && newTask.link === task.link
+      && newTask.colorIdx === task.colorIdx
+      && newTask.createdAt?.valueOf() === task.createdAt?.valueOf()
+      && newTask.plannedAt?.valueOf() === task.plannedAt?.valueOf()
+      && newTask.startedAt?.valueOf() === task.startedAt?.valueOf()
+      && newTask.reviewedAt?.valueOf() === task.reviewedAt?.valueOf()
+      && newTask.completedAt?.valueOf() === task.completedAt?.valueOf()
+      && newTask.expectedReviewAt?.valueOf() === task.expectedReviewAt?.valueOf()
+      && newTask.expectedCompleteAt?.valueOf() === task.expectedCompleteAt?.valueOf()
+    ) {
+      return;
+    }
+
+    store.updateTask(task.id, newTask);
+
+    playUpdatedAnim();
+    setTimeout(() => (
+      containerRef.current?.scrollIntoView({ behavior: 'instant', block: 'center' })
+    ), 10);
+  }
 
   const updateExpectedDate = (date: Date | undefined) => {
     if (task.status === 2) {
@@ -57,15 +82,10 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     };
 
     playUpdatedAnim();
-    setTimeout(() =>
+    setTimeout(() => (
       containerRef.current?.scrollIntoView({ behavior: 'instant', block: 'center' })
-      , 10);
+    ), 10);
   };
-
-  // const updateHandler = () => {
-  //   const newTask = task;
-  //   store.updateTask(task.id, newTask);
-  // };
 
   const removeHandler = () => {
     setIsDying(true);
@@ -76,11 +96,16 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
 
   // Menu
   const menuContainerRef = useRef<HTMLDivElement>(null);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuToggleButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const removeButtonRef = useRef<HTMLButtonElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(task);
 
-  const menuButtonHandler = () => {
+  const menuToggleHandler = () => {
     if (isMenuOpen) {
+      // 변경사항 적용
+      updateTask(editingTask);
       setIsMenuOpen(false);
     } else {
       setIsMenuOpen(true);
@@ -88,10 +113,37 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
   };
 
+  const cancelHandler = () => {
+    // 변경사항 취소
+    setEditingTask(task);
+    setIsMenuOpen(false);
+  };
+
   const menuBlurHandler = (e: React.FocusEvent<HTMLDivElement, Element>) => {
-    if (!menuContainerRef.current?.contains(e.relatedTarget)
-      && e.relatedTarget !== menuButtonRef.current) {
+    if (
+      !menuContainerRef.current?.contains(e.relatedTarget)
+      && e.relatedTarget !== menuToggleButtonRef.current
+      && e.relatedTarget !== cancelButtonRef.current
+      && e.relatedTarget !== removeButtonRef.current
+    ) {
       setIsMenuOpen(false);
+    }
+  };
+
+  // Move
+  const stageContainerRef = useRef<HTMLDivElement>(null);
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+
+  const moveToHandler = () => {
+    if (!isMoveOpen) {
+      setIsMoveOpen(true);
+      stageContainerRef.current?.focus();
+    }
+  };
+
+  const stageBlurHandler = (e: React.FocusEvent<HTMLDivElement, Element>) => {
+    if (!stageContainerRef.current?.contains(e.relatedTarget)) {
+      setIsMoveOpen(false);
     }
   };
 
@@ -133,27 +185,17 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   }, [isNew]);
 
   return (
-    <Wrapper $isDying={isDying}>
+    <Wrapper
+      $isMenuOpen={isMenuOpen}
+      $isDying={isDying}
+    >
       <Container
         ref={containerRef}
         $isNew={newAnimTimeoutID > 0}
         $isUpdated={updatedAnimTimeoutID > 0}
         $isDying={isDying}
       >
-        {/* DEBUG */}
-        {/* <h1>{isMoved ? 'true' : 'false'}</h1>
-        <div>ID: {task.id}</div> */}
-        <div>Title: {task.title}</div>
-        {/* <div>Link: {task.link}</div>
-        <div>Status: {task.status}</div>
-        <div>Created At: {task.createdAt?.toLocaleString('ko-KR')}</div>
-        <div>Planned At: {task.plannedAt?.toLocaleString('ko-KR')}</div>
-        <div>Started At: {task.startedAt?.toLocaleString('ko-KR')}</div>
-        <div>Reviewed At: {task.reviewedAt?.toLocaleString('ko-KR')}</div>
-        <div>Completed At: {task.completedAt?.toLocaleString('ko-KR')}</div>
-        {task.status === 2 && <div>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
-        {task.status === 3 && <div>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>} */}
-        {/* DEBUG */}
+        <div>{task.title}</div>
         {
           (task.status === 2 || task.status === 3) &&
           <DateInput
@@ -167,50 +209,138 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
             onConfirmDate={updateExpectedDate}
           />
         }
-        {/* 
-      상위로 하나 더 묶어서 onFocus 관리
-      <DetailButton> 
-      <DetailModalBoundingBox /> 위 아래 여백 따라 방향 맞추기
-       */}
-        <ButtonContainer>
-          <MoveButton disabled={task.status === 0} onClick={() => moveHandler(-1)}>left</MoveButton>
-          {/*
-        상위로 하나 더 묶어서 MoveToButton과 함께 onFocus 관리
-        <MoveToModalBoundingBox /> size change, overflow hidden
-        <MoveToModalContainer /> 버튼 5개, 현재 스테이지 비활성화
+        {/* ============================= 단계 이동 버튼 ============================= */}
+        <MoveContainer>
+          <MoveToButton
+            onClick={moveToHandler}
+            $isOpen={isMoveOpen}
+          >
+            <MoreIcon />
+          </MoveToButton>
+          <StageContainer
+            ref={stageContainerRef}
+            $isOpen={isMoveOpen}
+            tabIndex={0}
+            onBlur={stageBlurHandler}
+          >
+            {stageNames.map((stage, i) => (
+              <StageButton
+                key={i}
+                onClick={() => moveHandler(i)}
+                $isCurrent={task.status === i}
+                disabled={task.status === i}
+              >
+                {stage}
+              </StageButton>
+            ))}
+          </StageContainer>
+          <MoveButton
+            disabled={task.status === 4}
+            onClick={() => moveHandler(task.status + 1)}
+          >
+            <StepIcon />
+          </MoveButton>
+        </MoveContainer>
 
-        */}
-          <MoveToButton>move to</MoveToButton>
-          <MoveButton disabled={task.status === 4} onClick={() => moveHandler(1)}>right</MoveButton>
-        </ButtonContainer>
-
+        {/* ============================= 일정 상세 메뉴 ============================= */}
         <MenuContainer
           ref={menuContainerRef}
           $isOpen={isMenuOpen}
           tabIndex={0}
           onBlur={menuBlurHandler}
         >
-          <RemoveButton className="remove-button" onClick={removeHandler}>
-            <TrashIcon />
-          </RemoveButton>
+          {/* DEBUG */}
+          {isMenuOpen &&
+            <DateInput
+              defaultDate={task.createdAt}
+              onConfirmDate={(date) => setEditingTask({
+                ...editingTask,
+                createdAt: date,
+              })}
+              onEnterDown={(date) => {
+                const newTask: Task = {
+                  ...editingTask,
+                  createdAt: date,
+                };
+                setEditingTask(newTask);
+                updateTask(newTask);
+                setIsMenuOpen(false);
+              }}
+            />
+          }
+          <div style={{ fontSize: '0.5rem' }}>ID: {task.id}</div>
+          <div style={{ fontSize: '0.5rem' }}>Title: {task.title}</div>
+          <div style={{ fontSize: '0.5rem' }}>Link: {task.link}</div>
+          <div style={{ fontSize: '0.5rem' }}>Status: {task.status}</div>
+          <div style={{ fontSize: '0.5rem' }}>Created At: {task.createdAt?.toLocaleString('ko-KR')}</div>
+          <div style={{ fontSize: '0.5rem' }}>Planned At: {task.plannedAt?.toLocaleString('ko-KR')}</div>
+          <div style={{ fontSize: '0.5rem' }}>Started At: {task.startedAt?.toLocaleString('ko-KR')}</div>
+          <div style={{ fontSize: '0.5rem' }}>Reviewed At: {task.reviewedAt?.toLocaleString('ko-KR')}</div>
+          <div style={{ fontSize: '0.5rem' }}>Completed At: {task.completedAt?.toLocaleString('ko-KR')}</div>
+          {task.status === 2 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
+          {task.status === 3 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>}
+          {/* DEBUG */}
+          <ColorOptionsContainer>
+            {colors.map((color, idx) => (
+              <ColorOption
+                key={idx}
+                onClick={() => setEditingTask({
+                  ...editingTask,
+                  colorIdx: idx,
+                })}
+                $color={color}
+                $isSelected={idx === editingTask.colorIdx}
+              >
+
+              </ColorOption>
+            ))}
+          </ColorOptionsContainer>
         </MenuContainer>
-        <MenuButton
-          ref={menuButtonRef}
-          onClick={menuButtonHandler}
+        <RemoveButton
+          ref={removeButtonRef}
+          onClick={removeHandler}
+          $isActive={isMenuOpen}
         >
-          <MenuIcon />
-        </MenuButton>
+          <RemoveIcon />
+        </RemoveButton>
+        <CancelButton
+          ref={cancelButtonRef}
+          onClick={cancelHandler}
+          $isActive={isMenuOpen}
+        >
+          <CancelIcon />
+        </CancelButton>
+        <MenuToggleButton
+          ref={menuToggleButtonRef}
+          onClick={menuToggleHandler}
+          $isActive={isMenuOpen}
+        >
+          {isMenuOpen
+            ? <ConfirmIcon />
+            : <MenuIcon />
+          }
+        </MenuToggleButton>
       </Container>
       <ColorTag className="color-tag" $color={colors[task.colorIdx]} />
     </Wrapper>
   );
 }
 
-const Wrapper = styled.div<{ $isDying?: boolean }>`
+const Wrapper = styled.div<{
+  $isMenuOpen?: boolean,
+  $isDying?: boolean,
+}>`
   position: relative;
 
   width: 100%;
-  height: 100px;
+  /* height: 100px; */
+  padding: 5px;
+
+  height: ${({ $isMenuOpen }) => $isMenuOpen
+    ? '200px'
+    : '60px'
+  };
+  transition: height 0.1s ease-in-out;
 
   display: flex;
   flex-direction: column;
@@ -226,9 +356,6 @@ const Wrapper = styled.div<{ $isDying?: boolean }>`
     : 'none'};
 
   @keyframes wrapperDyingAnim {
-    0% {
-      height: 100px;
-    }
     100% {
       height: 0px;
     }
@@ -244,12 +371,15 @@ const Container = styled.div<{
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 95%;
-  height: 95%;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
 
   overflow: hidden;
 
-  padding: 10px;
+  /* padding: 10px; */
+  /* padding-left: 38px; */
+  padding: 5px 5px 5px 38px;
   box-shadow: 0 0 3px #9e9e9e;
 
   border-radius: 10px;
@@ -264,7 +394,7 @@ const Container = styled.div<{
 
   animation: ${({ $isNew, $isUpdated, $isDying }) => {
     if ($isUpdated) {
-      return 'updatedAnim 0.1s ease-in-out';
+      return 'updatedAnim 0.2s ease-in-out';
     } else if ($isNew) {
       return 'newAnim 0.2s ease-in-out';
     } else if ($isDying) {
@@ -278,10 +408,16 @@ const Container = styled.div<{
     0% {
       transform: translateY(0);
     }
-    40% {
-      transform: translateY(-10px);
+    20% {
+      transform: translateY(-8px);
     }
-    90% {
+    40% {
+      transform: translateY(6px);
+    }
+    60% {
+      transform: translateY(-4px);
+    }
+    80% {
       transform: translateY(2px);
     }
     100% {
@@ -314,9 +450,6 @@ const Container = styled.div<{
     filter: brightness(98%);
   }
 
-  /* &:hover .color-tag {
-    height: calc(100% - 20px);
-  } */
   &:hover ~ .color-tag {
     height: calc(95% - 20px);
   }
@@ -324,103 +457,119 @@ const Container = styled.div<{
 
 const ColorTag = styled.div<{ $color: string }>`
   width: 4px;
-  height: 50%;
+  /* height: 40px; */
+  height: calc(42% - 10px);
   transition: height 0.1s ease-in-out;
 
   border-radius: 2px;
 
   position: absolute;
   top: 50%;
-  left: 1.3%;
+  /* left: calc(2.5% - 3px); */
+  left: 2px;
   transform: translateY(-50%);
 
   background-color: ${({ $color }) => $color};
 `;
 
-// const ColorTag = styled.div<{ $color: string }>`
-//   width: 4px;
-//   height: calc(50% - 10px);
-//   transition: height 0.1s ease-in-out;
+const MoveContainer = styled.div`
+  width: auto;
+  height: 30px;
 
-//   border-radius: 2px;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
 
-//   position: absolute;
-//   top: 50%;
-//   left: -3px;
-//   transform: translateY(-50%);
-
-//   background-color: ${({ $color }) => $color};
-// `;
-
-const ButtonContainer = styled.div`
   display: flex;
   flex-direction: row;
 `;
 
-const Button = styled.button`
-  width: auto;
-`;
+const StageContainer = styled.div<{ $isOpen: boolean }>`
+  width: ${({ $isOpen }) => $isOpen
+    ? '75px'
+    : '0'
+  };
+  max-width: 'calc(100% - 108px)';
+  transition: width 0.2s ease-in-out;
+  height: 30px;
 
-const MoveButton = styled(Button)`
-  /* flex: 5; */
-`;
-
-const MoveToButton = styled(Button)`
-  /* flex: 1; */
-`;
-
-const MenuButton = styled(Button)`
   display: flex;
+  flex-direction: row;
 
-  width: 22px;
-  height: 22px;
+  overflow: hidden;
 
-  align-items: center;
-  justify-content: center;
+  background-color: blue;
+`;
 
-  position: absolute;
-  top: 19px;
-  right: 19px;
-  translate: 50% -50%;
+const StageButton = styled.button<{ $isCurrent: boolean }>`
+  width: 15px;
 
-  border-radius: 30%;
-
-  border: none;
-
-  box-shadow: 0 0 2px #9e9e9e;
-
-  background-color: #F7F7F9;
-
-  transition: transform 50ms ease-in-out;
-  &:hover {
-    background-color: #DBDBDD;
-    transform: scale(1.2);
+  &:disabled {
+    background-color: red;
   }
 `;
 
-const MenuContainer = styled.div<{ $isOpen: boolean }>`
-  /* width: 30px;
-  height: 30px; */
-  /* aspect-ratio: 1 / 1; */
-  width: ${({ $isOpen }) => $isOpen
-    ? '250%'
-    : '0'
-  };
-  height: ${({ $isOpen }) => $isOpen
-    ? '500%'
-    : '0'
-  };
-  border-radius: 50%;
-  transition: width 0.1s ease-in-out, height 0.1s ease-in-out;
-  
-  position: absolute;
-  top: 19px;
-  right: 19px;
-  translate: 50% -50%;
+const Button = styled.button`
+  border: none;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  background-color: #ffffff;
+  border: 1px solid #d8d8d8;
+
+  &:disabled {
+    background-color: #e8e8e8;
+  }
+
+  &:not([disabled]):hover {
+    background-color: #F7F7F9;
+  }
+`;
+
+const MoveButton = styled(Button)`
+  width: 40px;
+  height: 30px;
+
+  border-top-right-radius: 15px;
+  border-bottom-right-radius: 15px;
+
+  &:not([disabled]):hover {
+    padding-right: 0;
+  }
+`;
+
+const MoveToButton = styled(Button) <{ $isOpen: boolean }>`
+  width: 20px;
+  height: 30px;
+
+  border-top-left-radius: 15px;
+  border-bottom-left-radius: 15px;
+
+  border-right: none;
+  padding-right: 0;
+`;
+
+// scrap this /////////////////////////////////////////////////////////////
+const MenuContainer = styled.div<{ $isOpen: boolean }>`
+  width: 100%;
+  height: 100%;
+  
+  position: absolute;
+  top: ${({ $isOpen }) => $isOpen
+    ? '0'
+    : '-100%'
+  };
+  transition: top 0.1s ease-in-out;
+  left: 0;
+
+  padding: 10px;
+  padding-left: 38px;
+
+  /* display: flex;
+  align-items: center;
+  justify-content: center; */
   overflow: hidden;
 
   background-color: gold; // debug
@@ -430,33 +579,115 @@ const MenuContainer = styled.div<{ $isOpen: boolean }>`
   }
 `;
 
-const RemoveButton = styled(Button)`
-  display: flex;
-
+const MenuButton = styled.button<{ $isActive: boolean }>`
   width: 22px;
   height: 22px;
+
+  display: flex;
 
   align-items: center;
   justify-content: center;
 
   position: absolute;
-  /* top: 19px; */
-  /* right: 19px; */
-  /* translate: 50% -50%; */
-  translate: 0 32px;
-  
+  translate: -50% -50%;
 
   border-radius: 30%;
 
   border: none;
 
   box-shadow: 0 0 2px #9e9e9e;
+`;
+
+const MenuToggleButton = styled(MenuButton)`
+  top: 19px;
+  left: 19px;
 
   background-color: #F7F7F9;
 
   transition: transform 50ms ease-in-out;
+
+  &:hover {
+    background-color: #DBDBDD;
+  }
+  /* &:hover {
+    background-color: ${({ $isActive }) => $isActive
+    ? '#bae0bc'
+    : '#DBDBDD'
+  };
+  } */
+`;
+
+const CancelButton = styled(MenuButton)`
+  /* top: 49px; */
+  top: ${({ $isActive }) => $isActive
+    ? '49px'
+    : '19px'
+  };
+  transition: top 0.1s ease-in-out;
+  left: 19px;
+
+  transform: ${({ $isActive }) => !$isActive && 'scale(0.5)'};
+
+  background-color: #F7F7F9;
+
+  &:hover {
+    background-color: #DBDBDD;
+  }
+
+  /* &:hover {
+    background-color: #f5cdcd;
+  } */
+`;
+
+const RemoveButton = styled(MenuButton)`
+  /* top: 79px; */
+  top: ${({ $isActive }) => $isActive
+    ? '79px'
+    : '19px'
+  };
+  transition: top 0.1s ease-in-out;
+  left: 19px;
+
+  transform: ${({ $isActive }) => !$isActive && 'scale(0.5)'};
+
+  background-color: #F7F7F9;
+
   &:hover {
     background-color: #f5cdcd;
+  }
+`;
+
+const ColorOptionsContainer = styled.div`
+  width: 90%;
+  height: 30px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: gray;
+`;
+
+const ColorOption = styled.div<{
+  $color: string,
+  $isSelected: boolean,
+}>`
+  width: 20px;
+  height: 20px;
+
+  border-radius: 20%;
+
+  // TODO: border style for CURRENT, SELECTED, OTHER
+  border: ${({ $isSelected }) => $isSelected
+    ? '3px solid black;'
+    : '1px solid black;'
+  };
+
+  background-color: ${({ $color }) => $color};
+
+  &:hover {
+    border-width: 2px;
   }
 `;
 

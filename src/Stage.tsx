@@ -3,6 +3,7 @@ import styled from "styled-components";
 import useStore, { SortType, stageNames, Task } from "./useStore";
 import TaskCard from "./TaskCard";
 import DateInput from "./DateInput";
+import { AddIcon } from "./Icons";
 
 interface Props {
   stageId: number;
@@ -128,6 +129,7 @@ function Stage({
       <AddWrapper>
         <AddContainer
           ref={addPanelRef}
+          $isActive={isAdding}
           tabIndex={0}
           onFocus={() => {
             setIsAdding(true);
@@ -139,23 +141,18 @@ function Stage({
             }
           }}
         >
-          {isAdding
-            ? <input
-              autoFocus
-              value={addData.title}
-              onChange={(e) => setAddData({ title: e.target.value })}
-              onKeyDown={(e) => {
-                if (addData.title.length > 0 && e.key === 'Enter') {
-                  addTask(expected); // Stage 내부 일자 상태 사용
-                }
-              }}
-              placeholder="새 작업"
-            />
-            : <div>{addData.title || '새 작업'}</div>
-          }
-          {addData.title.length > 0 && <AddButton onClick={() => addTask(expected)}>add</AddButton>}
-          {isAdding
-            && addData.title.length > 0
+          <AddTitleInput
+            autoFocus
+            value={addData.title}
+            onChange={(e) => setAddData({ title: e.target.value })}
+            onKeyDown={(e) => {
+              if (addData.title.length > 0 && e.key === 'Enter') {
+                addTask(expected); // Stage 내부 일자 상태 사용
+              }
+            }}
+            placeholder="새 작업"
+          />
+          {addData.title.length > 0
             && (stageId === 2 || stageId === 3)
             && <DateInput
               onConfirmDate={setExpected} // Stage 내부 일자 상태 업데이트
@@ -167,6 +164,9 @@ function Stage({
               }}
             />
           }
+          <AddButton onClick={() => addTask(expected)}>
+            <AddIcon />
+          </AddButton>
         </AddContainer>
       </AddWrapper>
     </Container>
@@ -180,7 +180,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 `;
 
 const ToolbarContainer = styled.div`
@@ -207,20 +207,48 @@ const TaskContainer = styled.div`
 
 const AddWrapper = styled.div`
   width: 100%;
-  height: 60px;
+  height: 40px;
 
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   background-color: red;
 `
 
-const AddContainer = styled.div`
+const AddContainer = styled.div<{ $isActive: boolean }>`
   width: 100%;
+  height: 100%;
+
+  border-radius: 20px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 
   background-color: green;
 `;
 
+const AddTitleInput = styled.input`
+  width: 100px;
+`;
+
 const AddButton = styled.button`
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  background-color: #ffffff;
+  &:hover {
+    background-color: #d8d6d6;
+  }
 `;
 
 export default Stage;
