@@ -3,8 +3,9 @@ import styled from "styled-components";
 import useStore, { stageNames, Task } from "./useStore";
 import { useEffect, useState } from "react";
 import DateInput from "./DateInput";
-import { CancelIcon, ConfirmIcon, MenuIcon, MoreIcon, RemoveIcon, StepIcon } from "./Icons";
+import { CancelIcon, ConfirmIcon, LinkIcon, MenuIcon, MoreIcon, RemoveIcon, StepIcon } from "./Icons";
 import { colors } from "./colors";
+import Input from "./Input";
 
 interface Props {
   task: Task;
@@ -16,6 +17,7 @@ interface Props {
 function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isLinkValid, setIsLinkValid] = useState(validateLink(task.link));
 
   const moveHandler = (newStatus: number) => {
     const newTask = {
@@ -49,6 +51,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
 
     store.updateTask(task.id, newTask);
+    setIsLinkValid(validateLink(task.link));
 
     playUpdatedAnim();
     setTimeout(() => (
@@ -130,7 +133,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
   };
 
-  // Move
+  // ============================= Move =============================
   const stageContainerRef = useRef<HTMLDivElement>(null);
   const [isMoveOpen, setIsMoveOpen] = useState(false);
 
@@ -147,7 +150,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
   };
 
-  // Animations
+  // ============================= Animations =============================
   const [newAnimTimeoutID, setNewAnimTimeoutID] = useState<number>(0);
   const [updatedAnimTimeoutID, setUpdatedAnimTimeoutID] = useState<number>(0);
   const [isDying, setIsDying] = useState(false);
@@ -195,7 +198,17 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
         $isUpdated={updatedAnimTimeoutID > 0}
         $isDying={isDying}
       >
-        <div>{task.title}</div>
+        <div title={task.title}>{task.title}</div>
+        {isLinkValid &&
+          <LinkButton
+            title={task.link}
+            href={`https://${task.link}`}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <LinkIcon />
+          </LinkButton>
+        }
         {
           (task.status === 2 || task.status === 3) &&
           <DateInput
@@ -250,7 +263,22 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
           onBlur={menuBlurHandler}
         >
           {/* DEBUG */}
-          {isMenuOpen &&
+          <Input
+            value={editingTask.title}
+            onChange={(e) => setEditingTask({
+              ...editingTask,
+              title: e.target.value,
+            })}
+          />
+          <Input
+            value={editingTask.link}
+            onChange={(e) => setEditingTask({
+              ...editingTask,
+              link: e.target.value,
+            })}
+          />
+
+          {/* {isMenuOpen &&
             <DateInput
               defaultDate={task.createdAt}
               onConfirmDate={(date) => setEditingTask({
@@ -267,18 +295,20 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
                 setIsMenuOpen(false);
               }}
             />
-          }
+          } */}
+
+
           <div style={{ fontSize: '0.5rem' }}>ID: {task.id}</div>
-          <div style={{ fontSize: '0.5rem' }}>Title: {task.title}</div>
+          {/* <div style={{ fontSize: '0.5rem' }}>Title: {task.title}</div>
           <div style={{ fontSize: '0.5rem' }}>Link: {task.link}</div>
-          <div style={{ fontSize: '0.5rem' }}>Status: {task.status}</div>
+          <div style={{ fontSize: '0.5rem' }}>Status: {task.status}</div> */}
           <div style={{ fontSize: '0.5rem' }}>Created At: {task.createdAt?.toLocaleString('ko-KR')}</div>
           <div style={{ fontSize: '0.5rem' }}>Planned At: {task.plannedAt?.toLocaleString('ko-KR')}</div>
           <div style={{ fontSize: '0.5rem' }}>Started At: {task.startedAt?.toLocaleString('ko-KR')}</div>
           <div style={{ fontSize: '0.5rem' }}>Reviewed At: {task.reviewedAt?.toLocaleString('ko-KR')}</div>
           <div style={{ fontSize: '0.5rem' }}>Completed At: {task.completedAt?.toLocaleString('ko-KR')}</div>
-          {task.status === 2 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
-          {task.status === 3 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>}
+          {/* {task.status === 2 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedReviewAt?.toLocaleString('ko-KR')}</div>}
+          {task.status === 3 && <div style={{ fontSize: '0.5rem' }}>Expected: {task.expectedCompleteAt?.toLocaleString('ko-KR')}</div>} */}
           {/* DEBUG */}
           <ColorOptionsContainer>
             {colors.map((color, idx) => (
@@ -326,6 +356,18 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   );
 }
 
+const validateLink = (url: string | undefined) => {
+  if (!url) {
+    return false;
+  }
+
+  if (url === '') {
+    return false;
+  }
+
+  return true;
+}
+
 const Wrapper = styled.div<{
   $isMenuOpen?: boolean,
   $isDying?: boolean,
@@ -338,7 +380,7 @@ const Wrapper = styled.div<{
 
   height: ${({ $isMenuOpen }) => $isMenuOpen
     ? '200px'
-    : '60px'
+    : '80px'
   };
   transition: height 0.1s ease-in-out;
 
@@ -362,6 +404,23 @@ const Wrapper = styled.div<{
   }
 `;
 
+const ColorTag = styled.div<{ $color: string }>`
+  width: 4px;
+  /* height: 40px; */
+  height: calc(42% - 10px);
+  transition: height 0.1s ease-in-out;
+
+  border-radius: 2px;
+
+  position: absolute;
+  top: 50%;
+  /* left: calc(2.5% - 3px); */
+  left: 2px;
+  transform: translateY(-50%);
+
+  background-color: ${({ $color }) => $color};
+`;
+
 const Container = styled.div<{
   $isNew?: boolean,
   $isUpdated?: boolean,
@@ -369,9 +428,9 @@ const Container = styled.div<{
 }>`
   position: relative;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: start;
+  justify-content: space-around;
   width: 100%;
   height: 100%;
 
@@ -441,6 +500,9 @@ const Container = styled.div<{
     0% {
       transform: scale(1);
     }
+    20% {
+      transform: scale(1.05);
+    }
     100% {
       transform: scale(0);
     }
@@ -455,21 +517,24 @@ const Container = styled.div<{
   }
 `;
 
-const ColorTag = styled.div<{ $color: string }>`
-  width: 4px;
-  /* height: 40px; */
-  height: calc(42% - 10px);
-  transition: height 0.1s ease-in-out;
+const LinkButton = styled.a`
+  width: 26px;
+  height: 26px;
 
-  border-radius: 2px;
+  border-radius: 30%;
 
   position: absolute;
-  top: 50%;
-  /* left: calc(2.5% - 3px); */
-  left: 2px;
-  transform: translateY(-50%);
+  right: 75px;
+  bottom: 25px;
+  transform: translateY(50%);
 
-  background-color: ${({ $color }) => $color};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #F7F7F9;
+  }
 `;
 
 const MoveContainer = styled.div`
@@ -538,6 +603,7 @@ const MoveButton = styled(Button)`
   &:not([disabled]):hover {
     padding-right: 0;
   }
+  transition: padding-right 0.1s;
 `;
 
 const MoveToButton = styled(Button) <{ $isOpen: boolean }>`
@@ -551,7 +617,6 @@ const MoveToButton = styled(Button) <{ $isOpen: boolean }>`
   padding-right: 0;
 `;
 
-// scrap this /////////////////////////////////////////////////////////////
 const MenuContainer = styled.div<{ $isOpen: boolean }>`
   width: 100%;
   height: 100%;
@@ -568,15 +633,16 @@ const MenuContainer = styled.div<{ $isOpen: boolean }>`
   padding-left: 38px;
 
   /* display: flex;
-  align-items: center;
-  justify-content: center; */
+  flex-direction: column;
+  align-items: start;
+  justify-content: start; */
   overflow: hidden;
 
-  background-color: gold; // debug
+  background-color: #d1d1d1; // debug
 
-  &:focus {
+  /* &:focus {
     background-color: orange; // debug
-  }
+  } */
 `;
 
 const MenuButton = styled.button<{ $isActive: boolean }>`
@@ -665,8 +731,6 @@ const ColorOptionsContainer = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-
-  background-color: gray;
 `;
 
 const ColorOption = styled.div<{

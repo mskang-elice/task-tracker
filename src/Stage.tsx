@@ -3,7 +3,8 @@ import styled from "styled-components";
 import useStore, { SortType, stageNames, Task } from "./useStore";
 import TaskCard from "./TaskCard";
 import DateInput from "./DateInput";
-import { AddIcon } from "./Icons";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, SortIcon } from "./Icons";
+import Input from "./Input";
 
 interface Props {
   stageId: number;
@@ -14,10 +15,6 @@ interface Props {
   movedTaskId: number | undefined;
   setMovedTaskId: (movedTaskId: number | undefined) => void;
   tasks: Task[];
-}
-
-interface AddData {
-  title: string;
 }
 
 function Stage({
@@ -32,6 +29,11 @@ function Stage({
 }: Props) {
   const store = useStore();
   const stage = stageNames[stageId];
+
+  // ==============================[정렬 옵션]==============================
+  const sortPanelRef = useRef<HTMLDivElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
 
   // ==============================[태스크 목록]==============================
   const sortedTasks = useMemo(() => tasks.sort((a, b) => {
@@ -67,19 +69,25 @@ function Stage({
 
   // ==============================[태스크 추가 패널]==============================
   const addPanelRef = useRef<HTMLDivElement>(null);
+  const addTitleInputRef = useRef<HTMLInputElement>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [addData, setAddData] = useState<AddData>({ title: '' });
+  const [addTitle, setAddTitle] = useState('');
   const [expected, setExpected] = useState<Date | undefined>(undefined);
+  const [addLink, setAddLink] = useState('');
 
   // 신규 태스크 애니메이션 재생용 상태
   const [newTaskId, setNewTaskId] = useState<number | undefined>(undefined);
 
   const addTask = (expectedDate: Date | undefined) => {
+    if (addTitle.length === 0) {
+      return;
+    }
+
     // 태스크 추가
     const newTask: Task = {
       id: store.data.nextId,
-      title: addData.title,
-      link: '',
+      title: addTitle,
+      link: addLink === '' ? undefined : addLink,
       status: stageId,
       colorIdx: 0,
       createdAt: new Date(),
@@ -89,7 +97,8 @@ function Stage({
     store.addTask(newTask);
 
     // 입력 필드 초기화
-    setAddData({ title: '' });
+    setAddTitle('');
+    setAddLink('');
     setIsAdding(false);
 
     // 신규 태스크 애니메이션 트리거
@@ -97,21 +106,55 @@ function Stage({
     setTimeout(() => {
       setNewTaskId(undefined);
     }, 1);
+
+    // 입력 필드로 포커스
+    addTitleInputRef.current?.focus();
   };
 
   return (
     <Container>
-      <div>{stage}</div>
       <ToolbarContainer>
-        <SortButton onClick={() => handleSort(SortType.id)}>id</SortButton>
-        <SortButton onClick={() => handleSort(SortType.title)}>title</SortButton>
-        <SortButton onClick={() => handleSort(SortType.createdAt)}>createdAt</SortButton>
-        <SortButton onClick={() => handleSort(SortType.plannedAt)}>plannedAt</SortButton>
-        <SortButton onClick={() => handleSort(SortType.startedAt)}>startedAt</SortButton>
-        <SortButton onClick={() => handleSort(SortType.reviewedAt)}>reviewedAt</SortButton>
-        <SortButton onClick={() => handleSort(SortType.completedAt)}>completedAt</SortButton>
-        {stageId === 2 && <SortButton onClick={() => handleSort(SortType.expectedReviewAt)}>expectedReviewAt</SortButton>}
-        {stageId === 3 && <SortButton onClick={() => handleSort(SortType.expectedCompleteAt)}>expectedCompleteAt</SortButton>}
+        <StageName>{stage}</StageName>
+        <SortButton
+          ref={sortButtonRef}
+          onClick={() => {
+            if (isSortMenuOpen) {
+              setIsSortMenuOpen(false);
+            } else {
+              setIsSortMenuOpen(true);
+              sortPanelRef.current?.focus();
+            }
+          }}
+          $isAscending={isAscending}
+        >
+          <SortIcon />
+          {isAscending
+            ? <ArrowUpIcon />
+            : <ArrowDownIcon />
+          }
+        </SortButton>
+        <SortMenuContainer
+          ref={sortPanelRef}
+          $isOpen={isSortMenuOpen}
+          tabIndex={0}
+          onBlur={(e) => {
+            if (!sortPanelRef.current?.contains(e.relatedTarget)
+              && e.relatedTarget !== sortButtonRef.current
+            ) {
+              setIsSortMenuOpen(false);
+            }
+          }}
+        >
+          <SortOption onClick={() => handleSort(SortType.id)}>id</SortOption>
+          <SortOption onClick={() => handleSort(SortType.title)}>title</SortOption>
+          <SortOption onClick={() => handleSort(SortType.createdAt)}>createdAt</SortOption>
+          <SortOption onClick={() => handleSort(SortType.plannedAt)}>plannedAt</SortOption>
+          <SortOption onClick={() => handleSort(SortType.startedAt)}>startedAt</SortOption>
+          <SortOption onClick={() => handleSort(SortType.reviewedAt)}>reviewedAt</SortOption>
+          <SortOption onClick={() => handleSort(SortType.completedAt)}>completedAt</SortOption>
+          {stageId === 2 && <SortOption onClick={() => handleSort(SortType.expectedReviewAt)}>expectedReviewAt</SortOption>}
+          {stageId === 3 && <SortOption onClick={() => handleSort(SortType.expectedCompleteAt)}>expectedCompleteAt</SortOption>}
+        </SortMenuContainer>
       </ToolbarContainer>
       <TaskWrapper>
         <TaskContainer>
@@ -141,35 +184,42 @@ function Stage({
             }
           }}
         >
-          <AddTitleInput
-            autoFocus
-            value={addData.title}
-            onChange={(e) => setAddData({ title: e.target.value })}
+          <Input
+            ref={addTitleInputRef}
+            value={addTitle}
+            onChange={(e) => setAddTitle(e.target.value)}
             onKeyDown={(e) => {
-              if (addData.title.length > 0 && e.key === 'Enter') {
+              if (e.key === 'Enter') {
                 addTask(expected); // Stage 내부 일자 상태 사용
               }
             }}
             placeholder="새 작업"
           />
-          {addData.title.length > 0
-            && (stageId === 2 || stageId === 3)
-            && <DateInput
+          {(stageId === 2 || stageId === 3) &&
+            <DateInput
               onConfirmDate={setExpected} // Stage 내부 일자 상태 업데이트
-              onEnterDown={(date) => {
-                // DateInput에서 직접 일자 전달
-                if (addData.title.length > 0) {
-                  addTask(date);
-                }
-              }}
+              onEnterDown={addTask} // DateInput에서 직접 일자 전달
             />
           }
-          <AddButton onClick={() => addTask(expected)}>
+          <Input
+            value={addLink}
+            onChange={(e) => setAddLink(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                addTask(expected); // Stage 내부 일자 상태 사용
+              }
+            }}
+            placeholder="링크"
+          />
+          <AddButton
+            onClick={() => addTask(expected)}
+            disabled={addTitle.length === 0}
+          >
             <AddIcon />
           </AddButton>
         </AddContainer>
       </AddWrapper>
-    </Container>
+    </Container >
   );
 }
 
@@ -180,15 +230,51 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
 `;
 
 const ToolbarContainer = styled.div`
+  position: relative;
   width: 100%;
   height: 30px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  /* background-color: gold; */
 `;
 
-const SortButton = styled.button`
+const StageName = styled.div`
+  
+`;
+
+const SortButton = styled.button<{ $isAscending: boolean }>`
+`;
+
+const SortMenuContainer = styled.div<{ $isOpen: boolean }>`
+  width: 100px;
+  height: ${({ $isOpen }) => $isOpen
+    ? 'auto'
+    : '0'
+  };
+  /* auto는 transition 불가가 */
+  /* transition: height 0.1s ease-in-out; */
+
+  position: absolute;
+  right: 0;
+  top: 30px;
+
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  /* background-color: red; */
+`;
+
+const SortOption = styled.button`
 `;
 
 const TaskWrapper = styled.div`
@@ -207,31 +293,31 @@ const TaskContainer = styled.div`
 
 const AddWrapper = styled.div`
   width: 100%;
-  height: 40px;
+  /* height: 100px; */
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background-color: red;
+  padding: 5px;
+
+  /* background-color: red; */
 `
 
 const AddContainer = styled.div<{ $isActive: boolean }>`
   width: 100%;
   height: 100%;
 
-  border-radius: 20px;
+  position: relative;
+
+  border-radius: 15px;
 
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: start;
   justify-content: space-between;
 
-  background-color: green;
-`;
-
-const AddTitleInput = styled.input`
-  width: 100px;
+  /* background-color: green; */
 `;
 
 const AddButton = styled.button`
@@ -239,15 +325,27 @@ const AddButton = styled.button`
   height: 30px;
   border-radius: 50%;
 
+  position: absolute;
+  right: 0;
+  bottom: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: none;
+  border: 1px solid #d8d8d8;
 
   background-color: #ffffff;
   &:hover {
     background-color: #d8d6d6;
+  }
+
+  &:disabled {
+    background-color: #e8e8e8;
+  }
+
+  &:not([disabled]):hover {
+    background-color: #F7F7F9;
   }
 `;
 

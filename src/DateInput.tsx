@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import Input from "./Input";
 
 interface Props {
   defaultDate?: Date;
@@ -69,8 +70,12 @@ const DateInput = ({ defaultDate, onConfirmDate, onEnterDown }: Props) => {
         // 즉시 생성해야 하므로 바로 처리
         const newDate = applyTextToDate(displayText);
         onEnterDown(newDate);
-      };
-      e.currentTarget.blur();
+        e.currentTarget.blur();
+        setDate(undefined);
+        setDisplayText('');
+      } else {
+        e.currentTarget.blur();
+      }
     };
   };
 
@@ -78,6 +83,8 @@ const DateInput = ({ defaultDate, onConfirmDate, onEnterDown }: Props) => {
     if (e.key === 'Enter') {
       if (onEnterDown) {
         onEnterDown(date);
+        setDate(undefined);
+        setDisplayText('');
       };
       e.currentTarget.blur();
     };
@@ -138,20 +145,20 @@ const date2value = (date: Date | undefined) => {
 };
 
 const Container = styled.div`
-  width: 100px;
-  height: 30px;
+  width: auto;
+  height: 18px;
 
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-around;
 
-  background-color: red;
+  /* background-color: red; */
 `;
 
-const StyledTextInput = styled.input`
-  width: 60px;
-  height: 20px;
+const StyledTextInput = styled(Input)`
+  width: 68px;
+
+  text-align: center;
 `;
 
 const StyledDateInput = styled.input`
