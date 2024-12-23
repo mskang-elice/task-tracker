@@ -563,14 +563,30 @@ const StageContainer = styled.div<{ $isOpen: boolean }>`
 
   overflow: hidden;
 
-  background-color: blue;
+  background-color: #dddddd;
 `;
 
 const StageButton = styled.button<{ $isCurrent: boolean }>`
   width: 15px;
 
+  text-align: center;
+  padding: 0;
+
+  font-size: 0.5rem;
+
+  border: solid 1px #dddddd;
+  border-right: none;
+  border-radius: 4px;
+
+  background-color: #ffffff;
+
+  &:not([disabled]):hover {
+    background-color: #eeeeee;
+  }
+
   &:disabled {
-    background-color: red;
+    /* border: solid 1px #222222; */
+    background-color: #dddddd;
   }
 `;
 
@@ -631,18 +647,9 @@ const MenuContainer = styled.div<{ $isOpen: boolean }>`
 
   padding: 10px;
   padding-left: 38px;
-
-  /* display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: start; */
   overflow: hidden;
 
-  background-color: #d1d1d1; // debug
-
-  /* &:focus {
-    background-color: orange; // debug
-  } */
+  background-color: #ffffff;
 `;
 
 const MenuButton = styled.button<{ $isActive: boolean }>`
@@ -670,17 +677,9 @@ const MenuToggleButton = styled(MenuButton)`
 
   background-color: #F7F7F9;
 
-  transition: transform 50ms ease-in-out;
-
   &:hover {
     background-color: #DBDBDD;
   }
-  /* &:hover {
-    background-color: ${({ $isActive }) => $isActive
-    ? '#bae0bc'
-    : '#DBDBDD'
-  };
-  } */
 `;
 
 const CancelButton = styled(MenuButton)`
@@ -730,7 +729,9 @@ const ColorOptionsContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: start;
+
+  gap: 10px;
 `;
 
 const ColorOption = styled.div<{
@@ -742,16 +743,16 @@ const ColorOption = styled.div<{
 
   border-radius: 20%;
 
-  // TODO: border style for CURRENT, SELECTED, OTHER
   border: ${({ $isSelected }) => $isSelected
-    ? '3px solid black;'
-    : '1px solid black;'
+    ? '2px solid #3b3b3b'
+    : '1px solid #3b3b3b'
   };
 
   background-color: ${({ $color }) => $color};
 
   &:hover {
-    border-width: 2px;
+    /* border-width: 2px; */
+    box-shadow: 0 0 15px 3px ${({ $color }) => $color};
   }
 `;
 

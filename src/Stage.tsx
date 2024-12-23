@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import useStore, { SortType, stageNames, Task } from "./useStore";
+import useStore, { SortOption, SortType, stageNames, Task } from "./useStore";
 import TaskCard from "./TaskCard";
 import DateInput from "./DateInput";
 import { AddIcon, ArrowDownIcon, ArrowUpIcon, SortIcon } from "./Icons";
@@ -8,54 +8,62 @@ import Input from "./Input";
 
 interface Props {
   stageId: number;
-  sortType: SortType;
-  setSortType: (sortType: SortType) => void;
-  isAscending: boolean;
-  setIsAscending: (isAscending: boolean) => void;
   movedTaskId: number | undefined;
   setMovedTaskId: (movedTaskId: number | undefined) => void;
-  tasks: Task[];
 }
 
 function Stage({
   stageId,
-  sortType,
-  setSortType,
-  isAscending,
-  setIsAscending,
   movedTaskId,
   setMovedTaskId,
-  tasks,
 }: Props) {
   const store = useStore();
   const stage = stageNames[stageId];
+  const [tasks, setTasks] = useState(store.data.tasks.filter((task) => task.status === stageId));
+  // sort of useMemo
+  useEffect(() => {
+    if (store.updatedStages.includes(stageId)) {
+      setTasks(store.data.tasks.filter((task) => task.status === stageId));
+    }
+  }, [store.data.tasks])
 
   // ==============================[정렬 옵션]==============================
   const sortPanelRef = useRef<HTMLDivElement>(null);
   const sortButtonRef = useRef<HTMLButtonElement>(null);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const sortOption = store.data.sortOptions[stageId];
+  const setSortOption = useCallback(
+    (newSortOption: SortOption) => store.setSortOption(stageId, newSortOption), []
+  );
 
   // ==============================[태스크 목록]==============================
   const sortedTasks = useMemo(() => tasks.sort((a, b) => {
     // 태스크 정렬 로직
     // 정렬할 값이 없으면 맨 뒤로
+    const sortType = sortOption.sortType;
+    const isAscending = sortOption.isAscending;
     if (!a[sortType]) return 1;
     if (!b[sortType]) return -1;
-    if (a[sortType] === b[sortType]) return 0;
+    if (a[sortType] === b[sortOption.sortType]) return 0;
 
     // isAscending에 따라 정렬
     const cmp = a[sortType] > b[sortType];
     return isAscending
       ? (cmp ? 1 : -1)
       : (cmp ? -1 : 1);
-  }), [tasks, sortType, isAscending]);
+  }), [tasks, sortOption]);
 
   const handleSort = (newSortType: SortType) => {
-    if (newSortType === sortType) {
-      setIsAscending(!isAscending);
+    if (newSortType === sortOption.sortType) {
+      setSortOption({
+        ...sortOption,
+        isAscending: !sortOption.isAscending,
+      });
     } else {
-      setSortType(newSortType);
-      setIsAscending(true);
+      setSortOption({
+        sortType: newSortType,
+        isAscending: true,
+      });
     }
   };
 
@@ -115,7 +123,7 @@ function Stage({
     <Container>
       <ToolbarContainer>
         <StageName>{stage}</StageName>
-        <SortButton
+        <SortMenuButton
           ref={sortButtonRef}
           onClick={() => {
             if (isSortMenuOpen) {
@@ -125,14 +133,14 @@ function Stage({
               sortPanelRef.current?.focus();
             }
           }}
-          $isAscending={isAscending}
+          $isAscending={sortOption.isAscending}
         >
           <SortIcon />
-          {isAscending
+          {sortOption.isAscending
             ? <ArrowUpIcon />
             : <ArrowDownIcon />
           }
-        </SortButton>
+        </SortMenuButton>
         <SortMenuContainer
           ref={sortPanelRef}
           $isOpen={isSortMenuOpen}
@@ -145,15 +153,23 @@ function Stage({
             }
           }}
         >
-          <SortOption onClick={() => handleSort(SortType.id)}>id</SortOption>
-          <SortOption onClick={() => handleSort(SortType.title)}>title</SortOption>
-          <SortOption onClick={() => handleSort(SortType.createdAt)}>createdAt</SortOption>
-          <SortOption onClick={() => handleSort(SortType.plannedAt)}>plannedAt</SortOption>
-          <SortOption onClick={() => handleSort(SortType.startedAt)}>startedAt</SortOption>
-          <SortOption onClick={() => handleSort(SortType.reviewedAt)}>reviewedAt</SortOption>
-          <SortOption onClick={() => handleSort(SortType.completedAt)}>completedAt</SortOption>
-          {stageId === 2 && <SortOption onClick={() => handleSort(SortType.expectedReviewAt)}>expectedReviewAt</SortOption>}
-          {stageId === 3 && <SortOption onClick={() => handleSort(SortType.expectedCompleteAt)}>expectedCompleteAt</SortOption>}
+          {Object.values(SortType).map((curSortType) => {
+            if (curSortType === SortType.expectedReviewAt && stageId !== 2) {
+              return;
+            }
+            if (curSortType === SortType.expectedCompleteAt && stageId !== 3) {
+              return;
+            }
+            return (
+              <SortButton
+                key={curSortType}
+                $isActive={curSortType === sortOption.sortType}
+                onClick={() => handleSort(curSortType)}
+              >
+                {curSortType}
+              </SortButton>
+            );
+          })}
         </SortMenuContainer>
       </ToolbarContainer>
       <TaskWrapper>
@@ -230,25 +246,46 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  /* background-color: red; */
 `;
 
 const ToolbarContainer = styled.div`
   position: relative;
   width: 100%;
-  height: 30px;
+  height: 42px;
+
+  padding: 8px 12px 8px 12px;
 
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 
-  /* background-color: gold; */
+  background-color: #ffffff;
+  box-shadow: inset 0 -50px 90px -100px #6700e6;
 `;
 
 const StageName = styled.div`
-  
+  color: #5e26a1;
 `;
 
-const SortButton = styled.button<{ $isAscending: boolean }>`
+const SortMenuButton = styled.button<{ $isAscending: boolean }>`
+  width: 40px;
+  height: 26px;
+
+  border-radius: 13px;
+  border: none;
+
+  background-color: rgba(0, 0, 0, 0);
+  box-shadow: inset 0 0 5px 2px #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #F7F7F9;
+  }
 `;
 
 const SortMenuContainer = styled.div<{ $isOpen: boolean }>`
@@ -257,12 +294,12 @@ const SortMenuContainer = styled.div<{ $isOpen: boolean }>`
     ? 'auto'
     : '0'
   };
-  /* auto는 transition 불가가 */
+  /* auto는 transition 불가 */
   /* transition: height 0.1s ease-in-out; */
 
   position: absolute;
   right: 0;
-  top: 30px;
+  top: 100%;
 
   z-index: 1;
 
@@ -274,12 +311,29 @@ const SortMenuContainer = styled.div<{ $isOpen: boolean }>`
   /* background-color: red; */
 `;
 
-const SortOption = styled.button`
+const SortButton = styled.button<{ $isActive: boolean }>`
+  width: 100%;
+  height: 18px;
+
+  border: none;
+
+  background-color: ${({ $isActive }) => $isActive
+    ? '#f8f8f8'
+    : '#e8e8e8'
+  };
+  
+  &:hover {
+    border: solid 1px #000000;
+  }
+
+  &:hover:active {
+    background-color: #ffffff;
+  }
 `;
 
 const TaskWrapper = styled.div`
   width: 100%;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 170px);
   overflow-y: auto;
 `
 
@@ -301,7 +355,7 @@ const AddWrapper = styled.div`
 
   padding: 5px;
 
-  /* background-color: red; */
+  /* background-color: green; */
 `
 
 const AddContainer = styled.div<{ $isActive: boolean }>`

@@ -1,41 +1,35 @@
 import styled from "styled-components";
 
 import Stage from "./Stage";
-import useStore, { SortType } from "./useStore";
+import useStore from "./useStore";
 import { initLocalStorage, resetLocalStorage } from "./initLocalStorage"; // DEBUG
 import { useState } from "react";
+import { RedoIcon, UndoIcon } from "./Icons";
 
 function App() {
   const stageIds = [0, 1, 2, 3, 4]
   const store = useStore();
   const [movedTaskId, setMovedTaskId] = useState<number | undefined>(undefined);
 
-  const sortOptions = stageIds.map(() => {
-    const [sortType, setSortType] = useState(SortType.createdAt);
-    const [isAscending, setIsAscending] = useState(false);
-    return { sortType, setSortType, isAscending, setIsAscending };
-  });
-
   return (
     <Container>
       <ToolBarContainer>
-        <UndoButton disabled={!store.undoable} onClick={store.undo}>undo</UndoButton>
-        <RedoButton disabled={!store.redoable} onClick={store.redo}>redo</RedoButton>
-        <button onClick={() => initLocalStorage()}>DEBUG: set init data</button>
-        <button onClick={() => resetLocalStorage()}>DEBUG: reset data</button>
+        <div style={{display: 'flex', flexDirection: 'row', gap: '8px'}}>
+          <Button disabled={!store.undoable} onClick={store.undo}><UndoIcon /></Button>
+          <Button disabled={!store.redoable} onClick={store.redo}><RedoIcon /></Button>
+        </div>
+        <div>
+          <button onClick={() => initLocalStorage()}>DEBUG: set init data</button>
+          <button onClick={() => resetLocalStorage()}>DEBUG: reset data</button>
+        </div>
       </ToolBarContainer>
       <StageContainer>
         {stageIds.map((stageId) => (
           <Stage
-          key={stageId}
-          stageId={stageId}
-          sortType={sortOptions[stageId].sortType}
-          isAscending={sortOptions[stageId].isAscending}
-          setSortType={sortOptions[stageId].setSortType}
-          setIsAscending={sortOptions[stageId].setIsAscending}
-          movedTaskId={movedTaskId}
-          setMovedTaskId={setMovedTaskId}
-          tasks={store.data.tasks.filter((task) => task.status === stageId)}
+            key={stageId}
+            stageId={stageId}
+            movedTaskId={movedTaskId}
+            setMovedTaskId={setMovedTaskId}
           />
         ))}
       </StageContainer>
@@ -55,25 +49,38 @@ const Container = styled.div`
 const ToolBarContainer = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  /* background-color: blue; */
 `;
 
-const UndoButton = styled.button`
-  width: 100px;
-  height: 100%;
-`;
+const Button = styled.button`
+  width: 22px;
+  height: 22px;
 
-const RedoButton = styled.button`
-  width: 100px;
-  height: 100%;
+  border: none;
+  border-radius: 30%;
+
+  box-shadow: 0 0 2px #9e9e9e;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background-color: #F7F7F9;
+
+  &:hover {
+    background-color: #DBDBDD;
+  }
 `;
 
 const StageContainer = styled.div`
   flex: 1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  /* grid-template-columns: 20vw 20vw 20vw 20vw 20vw; */
   grid-template-rows: 100%;
   gap: 10px;
 `;

@@ -18,7 +18,7 @@ export interface Task {
   // 상태: 구상 계획 진행 검수 완료
   status: number;
   colorIdx: number; // 색상 ID (colors.ts)
-  
+
   createdAt?: Date; // 생성 시각
   plannedAt?: Date; // 계획 시작 시각
   startedAt?: Date; // 진행 시작 시각
@@ -50,12 +50,17 @@ export enum SortType {
   expectedCompleteAt = 'expectedCompleteAt',
 }
 
+export interface SortOption {
+  sortType: SortType,
+  isAscending: boolean,
+}
+
 export const stageNames = ['구상', '계획', '진행', '검수', '완료'];
 
 interface Data {
   nextId: number;
   tasks: Task[];
-  sortOptions?: [];
+  sortOptions: SortOption[];
 };
 
 interface Store {
@@ -67,12 +72,21 @@ interface Store {
   redo: () => void;
   undoable: boolean;
   redoable: boolean;
+  updatedStages: number[];
+  setSortOption: (stageId: number, sortOption: SortOption) => void;
 }
 
 const defaultStore: Store = {
   data: {
     nextId: 0,
     tasks: [],
+    sortOptions: [
+      { sortType: SortType.id, isAscending: false },
+      { sortType: SortType.id, isAscending: false },
+      { sortType: SortType.id, isAscending: false },
+      { sortType: SortType.id, isAscending: false },
+      { sortType: SortType.id, isAscending: false },
+    ],
   },
   addTask: () => { },
   removeTask: () => { },
@@ -81,6 +95,8 @@ const defaultStore: Store = {
   redo: () => { },
   undoable: false,
   redoable: false,
+  updatedStages: [],
+  setSortOption: () => { },
 };
 
 const storeContext = createContext<Store>(defaultStore);
@@ -91,7 +107,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     : null;
   const initData: Data = storageData
     ? {
-      nextId: storageData.nextId,
+      ...storageData,
       tasks: storageData.tasks.map((task: TaskRaw) => ({
         ...task,
         colorIdx: task.colorIdx || 0,
@@ -106,11 +122,19 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
     : {
       nextId: 1,
       tasks: [],
+      sortOptions: [
+        { sortType: SortType.id, isAscending: false },
+        { sortType: SortType.id, isAscending: false },
+        { sortType: SortType.id, isAscending: false },
+        { sortType: SortType.id, isAscending: false },
+        { sortType: SortType.id, isAscending: false },
+      ],
     };
 
   const [data, setDataState] = useState<Data>(initData);
   const [undoHistory, setUndoHistory] = useState<Data[]>([]);
   const [redoHistory, setRedoHistory] = useState<Data[]>([]);
+  const [updatedStages, setUpdatedStages] = useState<number[]>([0, 1, 2, 3, 4]);
 
   const undoable = undoHistory.length > 0;
   const redoable = redoHistory.length > 0;
@@ -128,6 +152,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
 
   const undo = () => {
     if (!undoable) return;
+    setUpdatedStages([0, 1, 2, 3, 4]);
     setRedoHistory([...redoHistory, data]);
     setDataWithoutHistory(undoHistory[undoHistory.length - 1]);
     setUndoHistory(undoHistory.slice(0, -1));
@@ -135,6 +160,7 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
 
   const redo = () => {
     if (!redoable) return;
+    setUpdatedStages([0, 1, 2, 3, 4]);
     setUndoHistory([...undoHistory, data]);
     setDataWithoutHistory(redoHistory[redoHistory.length - 1]);
     setRedoHistory(redoHistory.slice(0, -1));
@@ -142,27 +168,64 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setTasks = (newTasks: Task[]) => {
     setData({
-      nextId: data.nextId,
+      ...data,
       tasks: newTasks,
     });
   };
 
   const addTask = (newTask: Task) => {
+    setUpdatedStages([newTask.status]);
     setData({
+      ...data,
       nextId: data.nextId + 1,
       tasks: [...data.tasks, newTask],
     });
   };
 
   const removeTask = (taskId: number) => {
-    setTasks(data.tasks.filter((task) => task.id !== taskId));
+    setTasks(data.tasks.filter((task) => {
+      if (task.id === taskId) {
+        setUpdatedStages([task.status]);
+        return false;
+      }
+      return true;
+    }));
   };
 
   const updateTask = (taskId: number, newTask: Task) => {
-    setTasks(data.tasks.map((task) => task.id === taskId ? newTask : task));
+    setTasks(data.tasks.map((task) => {
+      if (task.id === taskId) {
+        setUpdatedStages([task.status, newTask.status]);
+        return newTask;
+      }
+      return task;
+    }));
   };
 
-  const store: Store = { data, addTask, removeTask, updateTask, undo, redo, undoable, redoable };
+  const setSortOption = (stageId: number, sortOption: SortOption) => {
+    setUpdatedStages([]);
+    setData({
+      ...data,
+      sortOptions: [
+        ...data.sortOptions.slice(0, stageId),
+        sortOption,
+        ...data.sortOptions.slice(stageId + 1)
+      ],
+    })
+  }
+
+  const store: Store = {
+    data,
+    addTask,
+    removeTask,
+    updateTask,
+    undo,
+    redo,
+    undoable,
+    redoable,
+    updatedStages,
+    setSortOption,
+  };
   return <storeContext.Provider value={store}>{children}</storeContext.Provider>;
 };
 

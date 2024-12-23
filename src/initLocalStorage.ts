@@ -97,7 +97,7 @@ const initTasks = [
   // 검수 (review)
   { id: 107, title: "프론트엔드 커리큘럼 고도화", link: "", status: 3, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
   { id: 108, title: "fe 17주차 추가실습 검수", link: "", status: 3, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
-  
+
   // 진행 (work)
   { id: 87, title: "태스크 트래커 앱 제작", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
   { id: 109, title: "포폴 트랙 프론트 심사", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
@@ -125,8 +125,15 @@ const initTasks = [
 ];
 
 const initData = {
-  nextId: 100,
+  nextId: 115,
   tasks: initTasks,
+  sortOptions: [
+    { sortType: 'id', isAscending: false },
+    { sortType: 'id', isAscending: false },
+    { sortType: 'id', isAscending: false },
+    { sortType: 'id', isAscending: false },
+    { sortType: 'id', isAscending: false },
+  ],
 };
 
 export const initLocalStorage = () => {
