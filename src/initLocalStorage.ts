@@ -84,17 +84,31 @@ const initTasks = [
   { id: 81, title: "be 18주차 외주자료 검수", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
   { id: 82, title: "be 1주차 실습자료 수정", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
   { id: 83, title: "3차 프로젝트 가이드 작성", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 84, title: "React 프로젝트 코드 제작", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 85, title: "웹 리뉴얼 커리큘럼 초안", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 100, title: "be 2주차 자료 수정 이슈", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 101, title: "be 16주차 강의자료 수정 이슈", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 102, title: "be 18주차 실습 수정 이슈", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 103, title: "be 3주차 실습문제 수정 이슈", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 104, title: "React 프로젝트 지시사항 작성", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 105, title: "kdt vm 가이드 수정", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 106, title: "kdt 프로젝트 평가기준 작성", link: "", status: 4, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
 
   // 검수 (review)
-  { id: 84, title: "React 프로젝트 코드 제작", link: "", status: 3, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
-
+  { id: 107, title: "프론트엔드 커리큘럼 고도화", link: "", status: 3, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 108, title: "fe 17주차 추가실습 검수", link: "", status: 3, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  
   // 진행 (work)
-  { id: 85, title: "웹 리뉴얼 커리큘럼 초안", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
-  { id: 86, title: "React 프로젝트 해설 스크립트 제작", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
   { id: 87, title: "태스크 트래커 앱 제작", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 109, title: "포폴 트랙 프론트 심사", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 110, title: "Git 과목 커리큘럼 작성", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 111, title: "HTML 프로젝트 커리큘럼 작성", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 112, title: "JS Method 과목 커리큘럼 작성", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 113, title: "be 1차 프로젝트 가이드 작성", link: "", status: 2, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
 
   // 계획 (plan)
   { id: 88, title: "프론트엔트 테스트 시장 조사", link: "", status: 1, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
+  { id: 114, title: "kdt let var 수정 ", link: "", status: 1, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },
 
   // 구상 (idea)
   { id: 89, title: "애니메이션 툴 연구 (도레미파이썬 case study)", link: "", status: 0, createdAt: new Date(0), startedAt: new Date(0), reviewedAt: new Date(0), completedAt: new Date(0) },

@@ -50,12 +50,12 @@ export enum SortType {
   expectedCompleteAt = 'expectedCompleteAt',
 }
 
-export const stages = ['idea', 'plan', 'work', 'review', 'done'];
 export const stageNames = ['구상', '계획', '진행', '검수', '완료'];
 
 interface Data {
   nextId: number;
   tasks: Task[];
+  sortOptions?: [];
 };
 
 interface Store {
