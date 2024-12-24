@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Input from "./Input";
 
@@ -11,6 +11,10 @@ interface Props {
 const DateInput = ({ defaultDate, onConfirmDate, onEnterDown }: Props) => {
   const [date, setDate] = useState<Date | undefined>(defaultDate);
   const [displayText, setDisplayText] = useState(date2text(defaultDate));
+  useEffect(() => {
+    setDate(defaultDate);
+    setDisplayText(date2text(defaultDate));
+  }, [defaultDate]);
 
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDisplayText(e.target.value);
