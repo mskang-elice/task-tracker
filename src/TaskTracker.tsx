@@ -49,7 +49,7 @@ const Container = styled.div`
 const ToolBarContainer = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: end;
 
   margin-bottom: 8px;
 
