@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 import Stage from "./Stage";
 import useStore from "./useStore";
-import { initLocalStorage, resetLocalStorage } from "./initLocalStorage"; // DEBUG
+// import { initLocalStorage, resetLocalStorage } from "./initLocalStorage"; // DEBUG
 import { useState } from "react";
 import { RedoIcon, UndoIcon } from "./Icons";
 
@@ -18,10 +18,10 @@ function App() {
           <Button disabled={!store.undoable} onClick={store.undo}><UndoIcon /></Button>
           <Button disabled={!store.redoable} onClick={store.redo}><RedoIcon /></Button>
         </div>
-        <div>
+        {/* <div>
           <button onClick={() => initLocalStorage()}>DEBUG: set init data</button>
           <button onClick={() => resetLocalStorage()}>DEBUG: reset data</button>
-        </div>
+        </div> */}
       </ToolBarContainer>
       <StageContainer>
         {stageIds.map((stageId) => (
@@ -72,8 +72,12 @@ const Button = styled.button`
 
   background-color: #F7F7F9;
 
-  &:hover {
+  &:disabled {
     background-color: #DBDBDD;
+  }
+
+  &:not([disabled]):hover {
+    background-color: #eeeeee;
   }
 `;
 
