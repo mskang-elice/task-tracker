@@ -17,7 +17,8 @@ interface Props {
 function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isLinkValid, setIsLinkValid] = useState(validateLink(task.link));
+  // const [linkHref, setLinkHref] = useState(task.link);
+  const linkHref = link2href(task.link);
 
   const moveHandler = (newStatus: number) => {
     const newTask = {
@@ -51,7 +52,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
 
     store.updateTask(task.id, newTask);
-    setIsLinkValid(validateLink(task.link));
+    // setLinkHref(link2href(task.link));
 
     playUpdatedAnim();
     setTimeout(() => (
@@ -199,10 +200,10 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
         $isDying={isDying}
       >
         <div title={task.title}>{task.title}</div>
-        {isLinkValid &&
+        {linkHref &&
           <LinkButton
             title={task.link}
-            href={`https://${task.link}`}
+            href={linkHref}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -269,6 +270,13 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
               ...editingTask,
               title: e.target.value,
             })}
+            onKeyDown={(e) => {
+              // TODO: 함수화 필요
+              if (e.key === 'Enter') {
+                updateTask(editingTask);
+                setIsMenuOpen(false);
+              }
+            }}
           />
           <Input
             value={editingTask.link}
@@ -276,6 +284,12 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
               ...editingTask,
               link: e.target.value,
             })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                updateTask(editingTask);
+                setIsMenuOpen(false);
+              }
+            }}
           />
 
           {/* {isMenuOpen &&
@@ -356,16 +370,16 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   );
 }
 
-const validateLink = (url: string | undefined) => {
-  if (!url) {
-    return false;
+const link2href = (link: string | undefined) => {
+  if (!link) {
+    return null;
   }
 
-  if (url === '') {
-    return false;
+  if (!(link.slice(0, 8) === 'https://') && !(link.slice(0, 7) === 'http://')) {
+    return `https://${link}`;
   }
 
-  return true;
+  return link;
 }
 
 const Wrapper = styled.div<{
