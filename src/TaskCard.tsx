@@ -17,7 +17,6 @@ interface Props {
 function TaskCard({ task, isNew, isMoved, onMove }: Props) {
   const store = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
-  // const [linkHref, setLinkHref] = useState(task.link);
   const linkHref = link2href(task.link);
 
   const moveHandler = (newStatus: number) => {
@@ -52,7 +51,6 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
     }
 
     store.updateTask(task.id, newTask);
-    // setLinkHref(link2href(task.link));
 
     playUpdatedAnim();
     setTimeout(() => (
@@ -371,7 +369,7 @@ function TaskCard({ task, isNew, isMoved, onMove }: Props) {
 }
 
 const link2href = (link: string | undefined) => {
-  if (!link) {
+  if (!link || link.length === 0) {
     return null;
   }
 
